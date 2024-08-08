@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     if (mongoose_1.default.connection.readyState !== 1) {
-        yield mongoose_1.default.connect('mongodb+srv://um50765:USEVDnoFKoRaVDmI@cluster0.ervwj.mongodb.net/');
+        yield mongoose_1.default.connect('mongodb+srv://um50765:USEVDnoFKoRaVDmI@cluster0.ervwj.mongodb.net/Bookstore');
         console.log("Database Connected!");
     }
     else {

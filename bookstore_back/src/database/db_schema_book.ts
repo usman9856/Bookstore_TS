@@ -7,35 +7,40 @@ interface IBook extends Document {
   publishedYear: number;
   genre: string;
   price: number;
-  inStock?: boolean; // Optional field with default value
-  rating?: Decimal128; // Optional field, use Decimal128 type from mongoose
+  inStock?: boolean; 
+  quantity: number;
+  rating?: Decimal128;
 }
 
 // Create the Mongoose schema for the Book model
 const bookSchema: Schema<IBook> = new Schema({
   title: {
     type: String,
-    required: true
+    required: false
   },
   author: {
     type: String,
-    required: true
+    required: false
   },
   publishedYear: {
     type: Number,
-    required: true
+    required: false
   },
   genre: {
     type: String,
-    required: true
+    required: false
   },
   price: {
     type: Number,
-    required: true
+    required: false
   },
   inStock: {
     type: Boolean,
     default: true
+  },
+  quantity: {
+    type: Number,
+    required: false
   },
   rating: {
     type: Schema.Types.Decimal128, // Use Decimal128 for decimal values
@@ -44,6 +49,6 @@ const bookSchema: Schema<IBook> = new Schema({
 });
 
 // Create and export the Mongoose model based on the schema
-const model_Book = mongoose.model<IBook>('Book', bookSchema);
+const model_Book = mongoose.model<IBook>('book_log', bookSchema, 'book_log');
 
 export { model_Book, IBook };
