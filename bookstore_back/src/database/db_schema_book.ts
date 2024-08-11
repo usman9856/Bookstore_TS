@@ -2,37 +2,42 @@ import mongoose, { Schema, Document, Decimal128 } from 'mongoose';
 
 // Define the TypeScript interface for the Book document
 interface IBook extends Document {
+  id: string;
   title: string;
   author: string;
   publishedYear: number;
   genre: string;
   price: number;
-  inStock?: boolean; 
+  inStock?: boolean;
   quantity: number;
-  rating?: Decimal128;
+  rating?: Decimal128; // Optional
 }
 
 // Create the Mongoose schema for the Book model
 const bookSchema: Schema<IBook> = new Schema({
+  id: {
+    type: String,
+    required: true,
+  },
   title: {
     type: String,
-    required: false
+    required: true,
   },
   author: {
     type: String,
-    required: false
+    required: true,
   },
   publishedYear: {
     type: Number,
-    required: false
+    required: true,
   },
   genre: {
     type: String,
-    required: false
+    required: true,
   },
   price: {
     type: Number,
-    required: false
+    required: true,
   },
   inStock: {
     type: Boolean,
@@ -40,12 +45,12 @@ const bookSchema: Schema<IBook> = new Schema({
   },
   quantity: {
     type: Number,
-    required: false
+    required: true,
   },
   rating: {
-    type: Schema.Types.Decimal128, // Use Decimal128 for decimal values
-    required: false
-  }
+    type: Schema.Types.Decimal128,
+    required: false,
+  },
 });
 
 // Create and export the Mongoose model based on the schema

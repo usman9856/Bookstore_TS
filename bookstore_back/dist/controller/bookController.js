@@ -9,18 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateBook = exports.getBook = exports.setBook = exports.getAllBooks = void 0;
+exports.deleteBook = exports.updateBook = exports.getBook = exports.setBook = exports.getAllBooks = void 0;
 const db_schema_book_1 = require("../database/db_schema_book");
-// const searchBook = async (query: object) => {
-//   try {
-//     const data = await model_Book.find(query);
-//     return data
-//   } catch (error) {
-//     console.error("Book not available");
-//     throw error;
-//   }
-// };
 const getAllBooks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("getAllBooks called");
     try {
         const existingBooks = yield db_schema_book_1.model_Book.find({});
         if (existingBooks.length > 0) {
@@ -34,6 +26,7 @@ const getAllBooks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getAllBooks = getAllBooks;
 const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("setBook called");
     try {
         //check if incoming request is empty or not.
         if (!Array.isArray(req.body) || req.body.length === 0) {
@@ -44,7 +37,7 @@ const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         //loop through the whole req.body 
         for (const bookData of req.body) {
             // Ensure bookData contains required fields
-            if (!bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
+            if (!bookData.id || !bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
                 res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` });
                 return;
             }
@@ -74,14 +67,15 @@ const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.setBook = setBook;
 const getBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("getBook Called");
     try {
-        const { title } = req.params;
-        console.log("Title: ", title);
-        if (!title) {
+        const { id } = req.params;
+        console.log("getBook called to find book:\nID/ISBN: ", id);
+        if (!id) {
             res.status(400).json({ error: "Missing required parameter: title" });
             return;
         }
-        const book = yield db_schema_book_1.model_Book.findOne({ title });
+        const book = yield db_schema_book_1.model_Book.findOne({ id });
         if (!book) {
             res.status(404).json({ error: "Book not found" });
             return;
@@ -95,13 +89,14 @@ const getBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getBook = getBook;
 const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Updating book function called");
     try {
-        const { title } = req.params;
+        const { id } = req.params;
         const bookData = req.body; // Full book data should be provided in the request body
-        console.log("Title from params: ", title);
+        console.log("id from params: ", id);
         console.log("Book data from body: ", bookData);
-        if (!title) {
-            res.status(400).json({ error: "Missing required parameter: title" });
+        if (!id) {
+            res.status(400).json({ error: "Missing required parameter: id" });
             return;
         }
         if (!bookData || Object.keys(bookData).length === 0) {
@@ -109,10 +104,10 @@ const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         // Find the existing book
-        const existingBook = yield db_schema_book_1.model_Book.findOne({ title });
+        const existingBook = yield db_schema_book_1.model_Book.findOne({ id });
         if (existingBook) {
             // If book exists, update the entire entry
-            const updateResult = yield db_schema_book_1.model_Book.updateOne({ title }, { $set: bookData } // Replace the entire book entry with the new data
+            const updateResult = yield db_schema_book_1.model_Book.updateOne({ id }, { $set: bookData } // Replace the entire book entry with the new data
             );
             console.log("Data Updated Successfully: ", updateResult);
             res.status(200).json({ action: 'updated', data: updateResult });
@@ -131,3 +126,26 @@ const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateBook = updateBook;
+const deleteBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("deleteBook Called");
+    try {
+        const id = req.params.id || req.query.id; // Handle both route and query parameters
+        console.log("deleteBook called to delete book:\nid: ", id);
+        if (!id) {
+            return res.status(400).json({ error: "Missing required parameter: id" });
+        }
+        // Find the book by id
+        const book = yield db_schema_book_1.model_Book.findOne({ id });
+        if (!book) {
+            return res.status(404).json({ error: "Book Not Found" });
+        }
+        // Delete the book
+        yield db_schema_book_1.model_Book.deleteOne({ id });
+        res.status(200).json({ message: "Book Deleted Successfully" });
+    }
+    catch (error) {
+        console.error("Failed to delete book:", error);
+        res.status(500).json({ error: "Failed to delete book from the database" });
+    }
+});
+exports.deleteBook = deleteBook;

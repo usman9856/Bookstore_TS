@@ -1,6 +1,7 @@
 import express from 'express';
 import connectDB from './database/db_connect'; 
 import bookRoutes from './routes/bookRoutes'; 
+import orderRoutes from './routes/orderRoutes'; 
 
 const app = express();
 const port: number = 5000;
@@ -13,6 +14,7 @@ app.use(express.json());
 
 //API call
 app.use('/Book', bookRoutes);
+app.use('/Order', orderRoutes);
 
 // Start the server
 app.listen(port, () => {

@@ -2,19 +2,8 @@ import { Request, Response } from 'express';
 import { model_Book, IBook } from '../database/db_schema_book'
 
 
-// const searchBook = async (query: object) => {
-//   try {
-//     const data = await model_Book.find(query);
-//     return data
-//   } catch (error) {
-//     console.error("Book not available");
-//     throw error;
-//   }
-// };
-
-
-
 const getAllBooks = async (req: Request, res: Response) => {
+  console.log("getAllBooks called");
   try {
     const existingBooks = await model_Book.find({});
     if (existingBooks.length > 0) {
@@ -28,6 +17,7 @@ const getAllBooks = async (req: Request, res: Response) => {
 };
 
 const setBook = async (req: Request, res: Response): Promise<void> => {
+  console.log("setBook called");
   try {
     //check if incoming request is empty or not.
     if (!Array.isArray(req.body) || req.body.length === 0) {
@@ -38,7 +28,7 @@ const setBook = async (req: Request, res: Response): Promise<void> => {
     //loop through the whole req.body 
     for (const bookData of req.body) {
       // Ensure bookData contains required fields
-      if (!bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
+      if (!bookData.id||!bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
         res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` });
         return;
       }
@@ -68,14 +58,15 @@ const setBook = async (req: Request, res: Response): Promise<void> => {
 };
 
 const getBook = async (req: Request, res: Response): Promise<void> => {
+  console.log("getBook Called");
   try {
-    const { title } = req.params;
-    console.log("Title: ", title);
-    if (!title) {
+    const { id } = req.params;
+    console.log("getBook called to find book:\nID/ISBN: ", id);
+    if (!id) {
       res.status(400).json({ error: "Missing required parameter: title" });
       return;
     }
-    const book = await model_Book.findOne({ title });
+    const book = await model_Book.findOne({ id });
     if (!book) {
       res.status(404).json({ error: "Book not found" });
       return;
@@ -88,14 +79,18 @@ const getBook = async (req: Request, res: Response): Promise<void> => {
 };
 
 const updateBook = async (req: Request, res: Response): Promise<void> => {
+
+  console.log("Updating book function called");
+
   try {
-    const { title } = req.params;
+
+    const { id } = req.params;
     const bookData = req.body; // Full book data should be provided in the request body
-    console.log("Title from params: ", title);
+    console.log("id from params: ", id);
     console.log("Book data from body: ", bookData);
 
-    if (!title) {
-      res.status(400).json({ error: "Missing required parameter: title" });
+    if (!id) {
+      res.status(400).json({ error: "Missing required parameter: id" });
       return;
     }
     if (!bookData || Object.keys(bookData).length === 0) {
@@ -103,16 +98,17 @@ const updateBook = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     // Find the existing book
-    const existingBook = await model_Book.findOne({ title });
+    const existingBook = await model_Book.findOne({ id });
     if (existingBook) {
       // If book exists, update the entire entry
       const updateResult = await model_Book.updateOne(
-        { title },
+        { id },
         { $set: bookData } // Replace the entire book entry with the new data
       );
       console.log("Data Updated Successfully: ", updateResult);
       res.status(200).json({ action: 'updated', data: updateResult });
-    } else {
+    }
+    else {
       // If book doesn't exist, create a new entry
       const newBook = new model_Book(bookData);
       const savedBook = await newBook.save();
@@ -125,5 +121,26 @@ const updateBook = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const deleteBook = async (req: Request, res: Response) => {
+  console.log("deleteBook Called");
+  try {
+    const id = req.params.id || req.query.id; // Handle both route and query parameters
+    console.log("deleteBook called to delete book:\nid: ", id);
+    if (!id) {
+      return res.status(400).json({ error: "Missing required parameter: id" });
+    }
+    // Find the book by id
+    const book = await model_Book.findOne({ id });
+    if (!book) {
+      return res.status(404).json({ error: "Book Not Found" });
+    }
+    // Delete the book
+    await model_Book.deleteOne({ id });
+    res.status(200).json({ message: "Book Deleted Successfully" });
+  } catch (error) {
+    console.error("Failed to delete book:", error);
+    res.status(500).json({ error: "Failed to delete book from the database" });
+  }
+};
 
-export { getAllBooks, setBook, getBook,updateBook };
+export { getAllBooks, setBook, getBook, updateBook, deleteBook };

@@ -27,25 +27,29 @@ exports.model_Book = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 // Create the Mongoose schema for the Book model
 const bookSchema = new mongoose_1.Schema({
+    id: {
+        type: String,
+        required: true,
+    },
     title: {
         type: String,
-        required: false
+        required: true,
     },
     author: {
         type: String,
-        required: false
+        required: true,
     },
     publishedYear: {
         type: Number,
-        required: false
+        required: true,
     },
     genre: {
         type: String,
-        required: false
+        required: true,
     },
     price: {
         type: Number,
-        required: false
+        required: true,
     },
     inStock: {
         type: Boolean,
@@ -53,12 +57,12 @@ const bookSchema = new mongoose_1.Schema({
     },
     quantity: {
         type: Number,
-        required: false
+        required: true,
     },
     rating: {
-        type: mongoose_1.Schema.Types.Decimal128, // Use Decimal128 for decimal values
-        required: false
-    }
+        type: mongoose_1.Schema.Types.Decimal128,
+        required: false,
+    },
 });
 // Create and export the Mongoose model based on the schema
 const model_Book = mongoose_1.default.model('book_log', bookSchema, 'book_log');

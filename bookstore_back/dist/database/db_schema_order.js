@@ -25,26 +25,29 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.model_Order = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-// Create the Mongoose schema for the Order model
+// Order schema
 const orderSchema = new mongoose_1.Schema({
+    orderId: {
+        type: String,
+        required: true,
+    },
     customerName: {
         type: String,
         required: true,
     },
     orderDate: {
-        type: String,
-        required: true
+        type: Date, // Ensure the type is Date for consistency
+        required: true,
     },
     book: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Book',
-        required: true
+        required: true,
     },
     status: {
-        type: [String],
-        required: true
+        type: String,
+        required: true,
     }
 });
-// Create and export the Mongoose model based on the schema
-const model_Order = mongoose_1.default.model('Order', orderSchema);
+const model_Order = mongoose_1.default.model('order_log', orderSchema, 'order_log');
 exports.model_Order = model_Order;
