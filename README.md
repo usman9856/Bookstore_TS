@@ -10,6 +10,16 @@ The aim of this project is to develop a simple RESTful API for managing a bookst
 - **Web Framework**: Use Express for handling HTTP requests and responses.
 - **Database**: Integrate MongoDB to store and manage the bookstore's inventory.
 
+
+### Execution of Project
+- **Database Setup**: Database setup is easy navigate to ```bookstore_back/src/database/db_connect.ts``` and add your monogoDB URI path to connection
+- **Package Setup**: Package setup is easy navigate terminal and type ```npm install``` to execute installation of packages.
+- **Running Project**: To run the project first ensure the installation is complete and TypeScript is installed and then simply write ```npm run dev``` in the terminal it will use cocurrently packaget to execute the TypeScript and JavaScript commands side by side and constantly which will update and rerun as you make changes and save the file you are working on.
+
+
+
+
+
 ### Book Management
 - **Book Schema**: A Mongoose schema for books with the following fields:
   - Title: string, required
@@ -28,22 +38,34 @@ The aim of this project is to develop a simple RESTful API for managing a bookst
 
 ### Order Management
 - **Order Schema**: Create a custom Mongoose schema for orders, allowing customers to purchase books and track stock.
+- **API Endpoints**:
+  - `GET /orders`: Retrieve a list of all orders. (`router.get('/', getAllOrder)`)
+  - `GET /orders/:orderId`: Retrieve details of a single order by its ID. (`router.get('/:orderId', getOrder)`)
+  - `POST /orders/Buy`: Create a new order. (`router.post('/Buy', setOrder)`)
+
+### Person Management
+- **API Endpoints**:
+  - `GET /Login`: Route handler for logging in a person. (`router.get('/Login', logInPerson)`)
+  - `POST /Signup`: Route handler for signing up a new person. (`router.post('/Signup', signUpPerson)`)
+
+
 
 ### Authentication
 - **Protected Routes**: Secure routes for ordering, managing cart, viewing order history, and updating customer profiles.
 - **Review System**: Customers can leave reviews only if they have purchased the book.
+- **Authentication Endpoints**:
+  - `POST /auth/register`: Register a new user.
+  - `POST /auth/login`: Login a user.
+  - `GET /auth/profile`: Retrieve the logged-in user's profile.
 
 ### Validation and Error Handling
-- **Validation**: Implemented proper validation for all endpoints.
-- **Error Handling**: Ensure meaningful error messages for invalid requests.
+- **Validation**: Implemented proper validation for all endpoints to ensure data integrity and prevent invalid data.
+- **Error Handling**: Ensure meaningful error messages for invalid requests and handle unexpected errors gracefully.
 
 
-### Testing
-- **Unit Tests**: Wrote unit tests for API endpoints using Jest/Mocha to ensure reliability.
+### Additional Features
+- **Cart Management**: Allow users to add books to a cart and manage cart contents.
+- **Order History**: Track and retrieve past orders for user profiles.
+- **Reviews**: Enable users to leave reviews for books they have purchased.
 
-### Version Control
-- **Git**: Use Git for version control.
-- **Commit Practices**: Commit code regularly with meaningful commit messages.
-- **GitHub Repository**: Push code to a GitHub repository.
-
-This project hopes to demonstrates skills in backend development, database management, authentication, and testing, providing a solid foundation for building scalable and maintainable RESTful APIs.
+This project hopes to demonstrate skills in backend development, database management, authentication, and testing, providing a solid foundation for building scalable and maintainable RESTful APIs.

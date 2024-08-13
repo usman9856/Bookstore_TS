@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { getAllOrder, setOrder, getOrder } from '../controller/orderController';
+import { getAllOrder, setOrder, getOrder, } from '../controller/orderController';
 
 const router = Router();
 
-router.get('/', getAllOrder); //Working
-router.get('/:orderId', getOrder ); //Working
-router.post('/Add', setOrder); //Working
-// router.delete('/Delete/:orderId', deleteOrder); //Working
+router.get('/', getAllOrder); //Good
+router.get('/:orderId', getOrder ); //Good
+router.post('/Buy', setOrder); //Good
 
 export default router;

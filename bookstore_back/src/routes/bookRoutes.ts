@@ -3,10 +3,19 @@ import { getAllBooks, setBook, getBook, updateBook, deleteBook } from '../contro
 
 const router = Router();
 
-router.get('/', getAllBooks); //Good
-router.get('/:id', getBook); //Good
-router.put('/Update/:id', updateBook); //Good
-router.post('/Add', setBook); //Good
-router.delete('/Delete/:id', deleteBook); //Good
+// Route to get all books
+router.get('/', getAllBooks); // Good
+
+// Route to get a specific book by ISBN
+router.get('/:ISBN', getBook); // Good
+
+// Route to update a specific book by ISBN=
+router.put('/Update/:ISBN', updateBook); // Good
+
+// Route to add a new book
+router.post('/Add', setBook); // Good
+
+// Route to delete a specific book by ISBN
+router.delete('/Delete/:ISBN', deleteBook); // Good
 
 export default router;

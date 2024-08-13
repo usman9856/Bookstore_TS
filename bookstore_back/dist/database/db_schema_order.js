@@ -24,30 +24,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.model_Order = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
-// Order schema
+// Import necessary modules and types from Mongoose
+const mongoose_1 = __importStar(require("mongoose")); // Mongoose for database interaction
+// Define the schema for the Order model
 const orderSchema = new mongoose_1.Schema({
-    orderId: {
-        type: String,
-        required: true,
-    },
-    customerName: {
-        type: String,
-        required: true,
-    },
-    orderDate: {
-        type: Date, // Ensure the type is Date for consistency
-        required: true,
-    },
-    book: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Book',
-        required: true,
-    },
-    status: {
-        type: String,
-        required: true,
-    }
+    orderId: { type: String, required: true }, // Order ID must be a string and is required
+    customerName: { type: String, required: true }, // Customer's name must be a string and is required
+    email: { type: String, required: true }, // Customer's email must be a string and is required
+    orderDate: { type: Date, required: true }, // Date of the order must be a Date object and is required
+    book: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Book', required: true }, // Reference to the Book model, required
+    status: { type: String, required: true } // Order status must be a string and is required
 });
+// Create the Order model using the schema and export it
 const model_Order = mongoose_1.default.model('order_log', orderSchema, 'order_log');
 exports.model_Order = model_Order;
