@@ -8,9 +8,11 @@ router.get('/', getAllBooks); // Good
 
 // Route to get a specific book by ISBN
 router.get('/:ISBN', getBook); // Good
+router.get('/:_id', getBook); // Good
 
 // Route to update a specific book by ISBN=
 router.put('/Update/:ISBN', updateBook); // Good
+router.put('/Update/:_id', updateBook); // Good
 
 // Route to add a new book
 router.post('/Add', setBook); // Good

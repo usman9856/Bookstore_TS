@@ -73,6 +73,8 @@ const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Extract necessary data from request body
         const { personId, customerName, bookISBN } = req.body;
+        const person = yield db_schema_person_1.default.findOne({ person_id: personId });
+        const book = yield db_schema_book_1.model_Book.findOne({ ISBN: bookISBN });
         const today = new Date(); // Get current date
         const orderDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`; // Format order date
         // Validate required fields
@@ -80,15 +82,19 @@ const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(400).json({ message: 'Missing required fields' }); // Respond with validation error
         }
         // Check if the book exists and is in stock
-        const book = yield db_schema_book_1.model_Book.findOne({ ISBN: bookISBN });
         if (!book) {
             return res.status(404).json({ message: 'Book not found' }); // Respond with not found error
         }
-        if (book.quantity <= 0) {
+        else if (book.quantity <= 0) {
             return res.status(400).json({ message: 'Book is out of stock' }); // Respond with out of stock error
+        } ////////////////////////////////////////// Test this code snippet for future additions of books
+        else if (!person.library.includes(book._id)) {
+            person.library.push(book._id);
+        }
+        else {
+            console.log("Book already exists in the library.");
         }
         // Check if the person exists
-        const person = yield db_schema_person_1.default.findOne({ person_id: personId });
         if (!person) {
             return res.status(404).json({ message: 'Person not found' }); // Respond with not found error
         }

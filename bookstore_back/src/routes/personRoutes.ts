@@ -5,7 +5,7 @@ import { logInPerson, signUpPerson } from '../controller/personController'; // I
 // Create an instance of the Router
 const router = Router();
 // Define a GET route for the '/Login' endpoint
-router.get('/Login', logInPerson); // Route handler for logging in a person
+router.post('/Login', logInPerson); // Route handler for logging in a person
 // Define a POST route for the '/Signup' endpoint
 router.post('/Signup', signUpPerson); // Route handler for signing up a new person
 

@@ -4,6 +4,9 @@ import connectDB from './database/db_connect'; // Function to connect to the dat
 import bookRoutes from './routes/bookRoutes'; // Routes for book-related operations
 import orderRoutes from './routes/orderRoutes'; // Routes for order-related operations
 import orderPerson from './routes/personRoutes'; // Routes for person-related operations
+import cors from 'cors';
+
+
 
 // Create an instance of the Express application
 const app = express(); // Initialize Express app
@@ -11,6 +14,9 @@ const port: number = 5000; // Define port number
 
 // Connect to the database
 connectDB(); // Call function to establish a database connection
+
+// Use CORS with default settings (allow all origins)
+app.use(cors());
 
 // Middleware to parse JSON bodies from incoming requests
 app.use(express.json()); // Enable JSON body parsing

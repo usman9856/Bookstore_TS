@@ -1,38 +1,38 @@
-.App {
-  text-align: center;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+}
+body{
+  background-color: #f6f3ed;
+  color: #28281e;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.cont_bg_28281e {
+  background-color: #28281e;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Custom scrollbar for Webkit-based browsers */
+.scroll-container::-webkit-scrollbar {
+  height: 8px; /* Height of the scrollbar */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* Dark gray color of the scrollbar thumb */
+  border-radius: 8px; /* Rounded corners for the scrollbar thumb */
+  border: 2px solid #28281e; /* Optional: Adds a border around the scrollbar thumb */
 }
 
-.App-link {
-  color: #61dafb;
+.scroll-container::-webkit-scrollbar-track {
+  background-color: #e2e8f0; /* Light gray color of the scrollbar track */
+  border-radius: 8px; /* Rounded corners for the scrollbar track */
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Custom scrollbar for Firefox */
+.scroll-container {
+  scrollbar-width: thin; /* Thin scrollbar */
+  scrollbar-color: #4a5568 #e2e8f0; /* Color of scrollbar thumb and track */
 }

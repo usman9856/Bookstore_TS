@@ -7,8 +7,10 @@ const router = (0, express_1.Router)();
 router.get('/', bookController_1.getAllBooks); // Good
 // Route to get a specific book by ISBN
 router.get('/:ISBN', bookController_1.getBook); // Good
+router.get('/:_id', bookController_1.getBook); // Good
 // Route to update a specific book by ISBN=
 router.put('/Update/:ISBN', bookController_1.updateBook); // Good
+router.put('/Update/:_id', bookController_1.updateBook); // Good
 // Route to add a new book
 router.post('/Add', bookController_1.setBook); // Good
 // Route to delete a specific book by ISBN

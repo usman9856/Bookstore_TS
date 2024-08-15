@@ -76,13 +76,17 @@ exports.setBook = setBook;
 const getBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("getBook Called"); // Log function call
     try {
-        const { ISBN } = req.params; // Extract ISBN from request parameters
-        console.log("getBook called to find book:\nISBN: ", ISBN); // Log the ISBN
+        const { ISBN } = req.params; // Extract the identifier from request parameters
+        console.log("getBook called to find book:\nIdentifier: ", ISBN); // Log the identifier
         if (!ISBN) {
-            res.status(400).json({ error: "Missing required parameter: ISBN" }); // Respond with error if ISBN is missing
+            res.status(400).json({ error: "Missing required parameter: ISBN or ID" }); // Respond with error if identifier is missing
             return;
         }
-        const book = yield db_schema_book_1.model_Book.findOne({ ISBN }); // Find book by ISBN
+        // Determine if the identifier is an _id (assumed to be 24-character long) or an ISBN
+        const isObjectId = ISBN.length === 24;
+        // Find book by either _id or ISBN
+        const query = isObjectId ? { _id: ISBN } : { ISBN: ISBN };
+        const book = yield db_schema_book_1.model_Book.findOne(query); // Find the book using the appropriate query
         if (!book) {
             res.status(404).json({ error: "Book not found" }); // Respond with error if book not found
             return;
@@ -97,47 +101,93 @@ const getBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getBook = getBook;
 // Function to update or create a book by ISBN
 const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Updating book function called"); // Log function call
+    console.log("Updating book function called");
     try {
-        const { ISBN } = req.params; // Extract ISBN from request parameters
-        const bookData = req.body; // Get book data from request body
-        console.log("ISBN from params: ", ISBN); // Log the ISBN
-        console.log("Book data from body: ", bookData); // Log book data
+        const { ISBN } = req.params; // Extract the identifier from request parameters
+        const bookData = req.body;
+        console.log("Identifier from params: ", ISBN);
+        console.log("Book data from body: ", bookData);
         if (!ISBN) {
-            res.status(400).json({ error: "Missing required parameter: ISBN" }); // Respond with error if ISBN is missing
+            res.status(400).json({ error: "Missing required parameter: ISBN or ID" }); // Respond with error if identifier is missing
             return;
         }
-        if (!bookData || Object.keys(bookData).length === 0) {
-            res.status(400).json({ error: "Missing book data in the request body" }); // Respond with error if book data is missing
-            return;
-        }
-        // Find the existing book
-        const existingBook = yield db_schema_book_1.model_Book.findOne({ ISBN });
+        // Determine if the identifier is an _id (assumed to be 24-character long) or an ISBN
+        const isObjectId = ISBN.length === 24;
+        // Find book by either _id or ISBN
+        const query = isObjectId ? { _id: ISBN } : { ISBN: ISBN };
+        const existingBook = yield db_schema_book_1.model_Book.findOne(query);
         if (existingBook) {
-            // If book exists, handle reviews separately
-            let updatedFields = Object.assign({}, bookData);
+            let updateFields = {};
             if (bookData.review && Array.isArray(bookData.review)) {
-                updatedFields = Object.assign(Object.assign({}, updatedFields), { $push: { review: { $each: bookData.review } } });
+                updateFields = {
+                    $push: { review: { $each: bookData.review } },
+                };
             }
-            const updateResult = yield db_schema_book_1.model_Book.updateOne({ ISBN }, { $set: updatedFields } // Update the book fields
-            );
-            console.log("Data Updated Successfully: ", updateResult); // Log success
-            res.status(200).json({ action: 'updated', data: updateResult }); // Respond with update result
+            console.log("Query:", query);
+            console.log("Update Fields:", updateFields);
+            const updateResult = yield db_schema_book_1.model_Book.updateOne(query, updateFields);
+            console.log("Data Updated Successfully: ", updateResult);
+            if (updateResult.acknowledged) {
+                res.status(200).json({ action: 'updated', data: updateResult });
+            }
+            else {
+                res.status(500).json({ error: "Update not acknowledged by MongoDB" });
+            }
         }
         else {
-            // If book doesn't exist, create a new entry
-            const newBook = new db_schema_book_1.model_Book(Object.assign({ ISBN }, bookData));
-            const savedBook = yield newBook.save(); // Save the new book
-            console.log("Data Saved Successfully: ", savedBook); // Log success
-            res.status(201).json({ action: 'created', data: savedBook }); // Respond with creation result
+            res.status(404).json({ error: "Book not found" });
         }
     }
     catch (error) {
-        console.error("Failed to add or update book:", error); // Log error if adding or updating fails
-        res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
+        console.error("Failed to update book:", error);
+        res.status(500).json({ error: "Failed to update book in the database" });
     }
 });
 exports.updateBook = updateBook;
+// const updateBook = async (req: Request, res: Response): Promise<void> => {
+//   console.log("Updating book function called"); // Log function call
+//   try {
+//     const { ISBN } = req.params; // Extract ISBN from request parameters
+//     const bookData = req.body; // Get book data from request body
+//     console.log("ISBN from params: ", ISBN); // Log the ISBN
+//     console.log("Book data from body: ", bookData); // Log book data
+//     if (!ISBN) {
+//       res.status(400).json({ error: "Missing required parameter: ISBN" }); // Respond with error if ISBN is missing
+//       return;
+//     }
+//     if (!bookData || Object.keys(bookData).length === 0) {
+//       res.status(400).json({ error: "Missing book data in the request body" }); // Respond with error if book data is missing
+//       return;
+//     }
+//     // Find the existing book
+//     const existingBook = await model_Book.findOne({ ISBN });
+//     if (existingBook) {
+//       // If book exists, handle reviews separately
+//       let updatedFields = { ...bookData };
+//       if (bookData.review && Array.isArray(bookData.review)) {
+//         updatedFields = {
+//           ...updatedFields,
+//           $push: { review: { $each: bookData.review } }, // Append new reviews to the existing array
+//         };
+//       }
+//       const updateResult = await model_Book.updateOne(
+//         { ISBN },
+//         { $set: updatedFields } // Update the book fields
+//       );
+//       console.log("Data Updated Successfully: ", updateResult); // Log success
+//       res.status(200).json({ action: 'updated', data: updateResult }); // Respond with update result
+//     } else {
+//       // If book doesn't exist, create a new entry
+//       const newBook = new model_Book({ ISBN, ...bookData });
+//       const savedBook = await newBook.save(); // Save the new book
+//       console.log("Data Saved Successfully: ", savedBook); // Log success
+//       res.status(201).json({ action: 'created', data: savedBook }); // Respond with creation result
+//     }
+//   } catch (error) {
+//     console.error("Failed to add or update book:", error); // Log error if adding or updating fails
+//     res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
+//   }
+// };
 // Function to delete a book by ISBN
 const deleteBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("deleteBook Called"); // Log function call

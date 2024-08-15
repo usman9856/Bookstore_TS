@@ -9,11 +9,14 @@ const db_connect_1 = __importDefault(require("./database/db_connect")); // Funct
 const bookRoutes_1 = __importDefault(require("./routes/bookRoutes")); // Routes for book-related operations
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes")); // Routes for order-related operations
 const personRoutes_1 = __importDefault(require("./routes/personRoutes")); // Routes for person-related operations
+const cors_1 = __importDefault(require("cors"));
 // Create an instance of the Express application
 const app = (0, express_1.default)(); // Initialize Express app
 const port = 5000; // Define port number
 // Connect to the database
 (0, db_connect_1.default)(); // Call function to establish a database connection
+// Use CORS with default settings (allow all origins)
+app.use((0, cors_1.default)());
 // Middleware to parse JSON bodies from incoming requests
 app.use(express_1.default.json()); // Enable JSON body parsing
 // Define API routes and attach route handlers

@@ -66,6 +66,9 @@ const setOrder = async (req: Request, res: Response) => {
     try {
         // Extract necessary data from request body
         const { personId, customerName, bookISBN } = req.body;
+        const person = await model_person.findOne({ person_id: personId });
+        const book = await model_Book.findOne({ ISBN: bookISBN });
+
         const today = new Date(); // Get current date
         const orderDate: string = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`; // Format order date
 
@@ -75,16 +78,18 @@ const setOrder = async (req: Request, res: Response) => {
         }
 
         // Check if the book exists and is in stock
-        const book = await model_Book.findOne({ ISBN: bookISBN });
         if (!book) {
             return res.status(404).json({ message: 'Book not found' }); // Respond with not found error
         }
-        if (book.quantity <= 0) {
+        else if (book.quantity <= 0) {
             return res.status(400).json({ message: 'Book is out of stock' }); // Respond with out of stock error
+        }////////////////////////////////////////// Test this code snippet for future additions of books
+        else if (!person!.library.includes(book._id as ObjectId)) {
+            person!.library.push(book._id as ObjectId);
+        } else {
+            console.log("Book already exists in the library.");
         }
-
         // Check if the person exists
-        const person = await model_person.findOne({ person_id: personId });
         if (!person) {
             return res.status(404).json({ message: 'Person not found' }); // Respond with not found error
         }
