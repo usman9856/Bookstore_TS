@@ -21,6 +21,11 @@ export default function HomePage(): JSX.Element {
     const [selectedBook, setSelectedBook] = useState<IBook | null>(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [reviewText, setReviewText] = useState("");
+    const [localCart, setLocalCart] = useState<IBook[]>(() => {
+        // Initialize cart from localStorage if it exists
+        const savedCart = localStorage.getItem('cart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -39,14 +44,11 @@ export default function HomePage(): JSX.Element {
     };
 
     const togglePopup = () => {
-        // Retrieve and parse the user data from localStorage
         const userDataString = localStorage.getItem("user");
 
         if (userDataString) {
             try {
                 const userData = JSON.parse(userDataString);
-
-                // Ensure userData.library is an array and check if it includes the book ID
                 if (Array.isArray(userData.library) && userData.library.includes(selectedBook?._id)) {
                     setIsPopupOpen(prevState => !prevState);
                 } else {
@@ -64,13 +66,12 @@ export default function HomePage(): JSX.Element {
         if (selectedBook && reviewText) {
             try {
                 const response = await axios.put(`http://localhost:5000/Book/Update/${selectedBook.ISBN}`, {
-                    review: [reviewText], // Send the review text as an array
+                    review: [reviewText],
                 });
-                if (response.status != 200) {
+                if (response.status !== 200) {
                     alert("Failed to submit review. Please try again.");
                 }
                 window.location.reload();
-
             } catch (error) {
                 alert("Error submitting review: " + error);
             }
@@ -82,7 +83,14 @@ export default function HomePage(): JSX.Element {
         }
     };
 
+    const addToCart = (book: IBook) => {
+        // Update the local cart state
+        const updatedCart = [...localCart, book];
+        setLocalCart(updatedCart);
 
+        // Set the updated cart to localStorage
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+    };
 
     return (
         <div className="flex items-center justify-center flex-col">
@@ -115,7 +123,7 @@ export default function HomePage(): JSX.Element {
                 </div>
             )}
 
-            <div className="container overflow-x-auto scroll-container rounded-t-xl rounded-r-xl rounded-l-xl  shadow-lg shadow-gray-800  max-w-screen-lg  ">
+            <div className="container overflow-x-auto scroll-container rounded-t-xl rounded-r-xl rounded-l-xl shadow-lg shadow-gray-800 max-w-screen-lg">
                 {books.length === 0 ? (
                     <p className="text-center text-white mt-10">No books available.</p>
                 ) : (
@@ -130,6 +138,7 @@ export default function HomePage(): JSX.Element {
                                 <p className="text-lg font-semibold mb-2 text-white">${book.price.toFixed(2)}</p>
                                 <button
                                     className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200"
+                                    onClick={() => addToCart(book)}
                                 >
                                     Add to Cart
                                 </button>
@@ -139,7 +148,7 @@ export default function HomePage(): JSX.Element {
                 )}
             </div>
 
-            <div className="mt-10 p-10 overflow-y-auto h-[400px] container scroll-container rounded-b-xl rounded-r-xl rounded-l-xl shadow-lg shadow-gray-800 max-w-screen-lg ">
+            <div className="mt-10 p-10 overflow-y-auto h-[400px] container scroll-container rounded-b-xl rounded-r-xl rounded-l-xl shadow-lg shadow-gray-800 max-w-screen-lg">
                 {selectedBook ? (
                     <div>
                         <div className="flex flex-row justify-between items-center mb-4">

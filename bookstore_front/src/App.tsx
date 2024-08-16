@@ -4,6 +4,9 @@ import HomePage from './components/HomePage';
 import Authentication from './components/Authentication';
 import './App.css'
 import Library from './components/Library';
+import Cart from './components/Cart';
+import Order from './components/Order';
+import AdminPage from './components/Admin';
 function Root() {
   // Use the useLocation hook at the top level of the component
   const location = useLocation();
@@ -11,12 +14,15 @@ function Root() {
   return (
     <div className="flex">
       {/* Conditionally render Sidebar based on the current route */}
-      {location.pathname !== '/Authentication' && <div className="w-60 bg-gray-800 text-white flex-none">        <Sidebar />        </div>}
+      {location.pathname !== '/Authentication' && <div className="w-60 bg-gray-800 text-white flex-none"><Sidebar /></div>}
       <div className={`flex-grow ${location.pathname === '/Authentication' ? 'w-full' : 'p-6'}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/Authentication" element={<Authentication />} />
           <Route path="/Library" element={<Library />} />
+          <Route path="/Order" element={<Order />} />
+          <Route path="/Cart" element={<Cart />} />
+          <Route path="/Admin" element={<AdminPage />} />
         </Routes>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { IBook } from './db_schema_book'; // Import the IBook interface for type
 // Define the TypeScript interface for the Order document
 interface IOrder extends Document { // Extends Mongoose's Document type for MongoDB documents
     orderId: string; // Unique identifier for the order
+    // person_id: string;          // Unique identifier for the person
     customerName: string; // Name of the customer placing the order
     email: string; // Email of the customer
     orderDate: Date; // Date when the order was placed

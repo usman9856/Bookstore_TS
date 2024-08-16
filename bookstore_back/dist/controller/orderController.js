@@ -49,24 +49,43 @@ exports.getAllOrder = getAllOrder;
 const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log('getOrder Called'); // Log function call
     try {
-        const { orderId } = req.params; // Extract orderId from request parameters
-        console.log("Order Id: ", orderId); // Log the orderId
-        // Find the order by orderId and populate the 'book' field
-        const order = yield db_schema_order_1.model_Order.findOne({ orderId }).populate({
+        const { email } = req.params; // Extract email from request parameters
+        console.log("Email: ", email); // Log the email
+        // Find orders by email and populate the 'book' field
+        const orders = yield db_schema_order_1.model_Order.find({ email }).populate({
             path: 'book',
             model: db_schema_book_1.model_Book, // Populate with the book model
         });
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found' }); // Respond with not found error
+        if (orders.length === 0) {
+            return res.status(404).json({ error: 'No orders found for this email' }); // Respond with not found error
         }
-        return res.status(200).json(order); // Respond with the order data
+        return res.status(200).json(orders); // Respond with the orders data
     }
     catch (error) {
-        console.error('Error fetching order:', error); // Log error if fetching fails
+        console.error('Error fetching orders:', error); // Log error if fetching fails
         return res.status(500).json({ error: 'Server error' }); // Respond with server error
     }
 });
 exports.getOrder = getOrder;
+// const getOrder = async (req: Request, res: Response) => {
+//     console.log('getOrder Called'); // Log function call
+//     try {
+//         const { orderId } = req.params; // Extract orderId from request parameters
+//         console.log("Order Id: ", orderId); // Log the orderId
+//         // Find the order by orderId and populate the 'book' field
+//         const order = await model_Order.findOne({ orderId }).populate({
+//             path: 'book',
+//             model: model_Book, // Populate with the book model
+//         });
+//         if (!order) {
+//             return res.status(404).json({ error: 'Order not found' }); // Respond with not found error
+//         }
+//         return res.status(200).json(order); // Respond with the order data
+//     } catch (error) {
+//         console.error('Error fetching order:', error); // Log error if fetching fails
+//         return res.status(500).json({ error: 'Server error' }); // Respond with server error
+//     }
+// };
 // Function to set (create) a new order
 const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Set Order Called"); // Log function call
