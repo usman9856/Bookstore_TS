@@ -7,6 +7,8 @@ import Library from './components/Library';
 import Cart from './components/Cart';
 import Order from './components/Order';
 import AdminPage from './components/Admin';
+import { AuthProvider } from "../src/components/AuthContext"; // Adjust the import path
+
 function Root() {
   // Use the useLocation hook at the top level of the component
   const location = useLocation();
@@ -22,6 +24,7 @@ function Root() {
           <Route path="/Library" element={<Library />} />
           <Route path="/Order" element={<Order />} />
           <Route path="/Cart" element={<Cart />} />
+          {/* <Route path="/Add" element={<Book />} /> */}
           <Route path="/Admin" element={<AdminPage />} />
         </Routes>
       </div>

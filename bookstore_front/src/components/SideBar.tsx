@@ -37,7 +37,7 @@ export default function Sidebar() {
             <nav className="flex flex-col space-y-4 items-start">
                 {isAdmin ? (
                     <>
-                        <Link to="/AddBook" className="text-xl font-mono hover:text-blue-400">Add Book</Link>
+                        <Link to="/Book" className="text-xl font-mono hover:text-blue-400">Add Book</Link>
                         <Link to="/CreateUser" className="text-xl font-mono hover:text-blue-400">Create User</Link>
                         <Link to="/Order" className="text-xl font-mono hover:text-blue-400">View Orders</Link>
                     </>

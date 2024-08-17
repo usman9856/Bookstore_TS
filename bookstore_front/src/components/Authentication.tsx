@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState,useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext'; // Adjust the import path
 
 export default function Authentication(): JSX.Element {
+    const { setLoggedIn, setAdmin } = useAuth();
+
     // Login state
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
@@ -10,11 +13,11 @@ export default function Authentication(): JSX.Element {
     // Signup state
     const [signupEmail, setSignupEmail] = useState("");
     const [signupPassword, setSignupPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState(""); // State for confirm password
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [access, setAccess] = useState("user");
-    const [error, setError] = useState(""); // State to handle error messages
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     const handleLogin = async () => {
@@ -22,25 +25,25 @@ export default function Authentication(): JSX.Element {
             const data = { email: loginEmail, password: loginPassword };
             const response = await axios.post("http://localhost:5000/Person/Login", data);
 
-            // Check if the response contains the expected data
             if (response.data && typeof response.data === 'object') {
-                // Store the user data in local storage
                 localStorage.setItem("user", JSON.stringify(response.data.person));
-                console.log("User data stored:", response.data); // Debugging statement
 
-                // Navigate to the home page
+                // Update the context
+                setLoggedIn(true);
+                if (response.data.person.access === 'admin') {
+                    setAdmin(true);
+                }
+
                 navigate('/');
             } else {
                 console.error("Invalid response data:", response.data);
                 alert("Unexpected response data format. Please try again.");
             }
         } catch (error) {
-            // Log the error and show an alert to the user
             console.error("Login failed:", error);
             alert("Login failed. Please check your credentials and try again.");
         }
     };
-
 
     const handleSignup = async () => {
         if (signupPassword !== confirmPassword) {
