@@ -1,12 +1,16 @@
 // Import necessary types and models from Express and database schema
 import { Request, Response } from 'express'; // Request and Response types for Express
 import { model_Book, IBook } from '../database/db_schema_book'; // Book model and schema
-
+import mongoose from 'mongoose';
 // Function to get all books from the database
 const getAllBooks = async (req: Request, res: Response) => {
+  const page: number = Number(req.query.p ?? 0);
+  const bookPerPage: number = 4;
+  console.log('Page, bookPerPage, skip:', page, bookPerPage, page * bookPerPage);
+
   console.log("getAllBooks called"); // Log function call
   try {
-    const existingBooks = await model_Book.find({}); // Retrieve all books from the database
+    const existingBooks = await model_Book.find({}).skip(page*bookPerPage).limit(bookPerPage); // Retrieve all books from the database
     if (existingBooks.length > 0) { // Check if books exist
       res.json(existingBooks); // Respond with the list of books
     }
@@ -17,6 +21,7 @@ const getAllBooks = async (req: Request, res: Response) => {
 };
 
 // Function to add or update books in the database
+
 const setBook = async (req: Request, res: Response): Promise<void> => {
   console.log("setBook called"); // Log function call
   try {
@@ -25,20 +30,31 @@ const setBook = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ error: "Request body should be a non-empty array" }); // Respond with error if invalid
       return;
     }
+
     const results = []; // Array to store results
+
     // Loop through each book data in the request body
     for (const bookData of req.body) {
+      // Generate a new _id
+      const newId = new mongoose.Types.ObjectId();
+
+      // Add _id to bookData
+      bookData._id = newId;
+
       // Check for required fields in each book data
       if (!bookData.ISBN || !bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
         res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` }); // Respond with error if missing fields
         return;
       }
+
       // Set default review if not provided
       if (!bookData.review) {
         bookData.review = ["Not needed"];
       }
+
       // Search for existing books with the same title and author
       const existingBooks = await model_Book.find({ title: bookData.title, author: bookData.author });
+
       if (existingBooks.length === 0) {
         // Create a new book if no existing book is found
         const newBook = new model_Book(bookData);
@@ -55,12 +71,16 @@ const setBook = async (req: Request, res: Response): Promise<void> => {
         results.push({ action: 'updated', data: updateResult }); // Store result
       }
     }
+
     res.status(200).json(results); // Respond with the results array
   } catch (error) {
     console.error("Failed to add or update book:", error); // Log error if adding or updating fails
     res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
   }
 };
+
+
+
 
 // Function to get a single book by ISBN
 const getBook = async (req: Request, res: Response): Promise<void> => {

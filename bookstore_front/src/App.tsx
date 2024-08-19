@@ -2,12 +2,12 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Sidebar from './components/SideBar'; // Import the Sidebar component
 import HomePage from './components/HomePage';
 import Authentication from './components/Authentication';
-import './App.css'
+import './App.css';
 import Library from './components/Library';
 import Cart from './components/Cart';
 import Order from './components/Order';
 import AdminPage from './components/Admin';
-import { AuthProvider } from "../src/components/AuthContext"; // Adjust the import path
+import AccessModification from './components/AccessModification';
 
 function Root() {
   // Use the useLocation hook at the top level of the component
@@ -24,7 +24,8 @@ function Root() {
           <Route path="/Library" element={<Library />} />
           <Route path="/Order" element={<Order />} />
           <Route path="/Cart" element={<Cart />} />
-          {/* <Route path="/Add" element={<Book />} /> */}
+          {/* <Route path="/Admin/Book" element={<Book />} /> */}
+          <Route path="/Admin/User" element={<AccessModification />} />
           <Route path="/Admin" element={<AdminPage />} />
         </Routes>
       </div>

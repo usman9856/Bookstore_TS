@@ -11,13 +11,21 @@ let lastGeneratedDate: string = '20240101'; // Last generated date for order IDs
 
 // Function to get all orders
 const getAllOrder = async (req: Request, res: Response) => {
+    console.log('getAllOrder Called'); // Log function call
+
     try {
+        const page: number = Number(req.query.p ?? 0);
+        const ordersPerPage: number = 2;
+        console.log('Page, ordersPerPage, skip:', page, ordersPerPage, page * ordersPerPage);
+
         // Fetch all orders and populate the 'book' field with book data
         const orders = await model_Order.find()
             .populate({
                 path: 'book',
                 model: model_Book // Populate with the book model
-            });
+            })
+            .skip(page * ordersPerPage)
+            .limit(ordersPerPage);
 
         // Format the orders if necessary
         const formattedOrders = orders.map(order => ({
@@ -37,55 +45,54 @@ const getAllOrder = async (req: Request, res: Response) => {
 };
 
 // Function to get a specific order by orderId
+
+// Function to get a specific order by email with pagination
 const getOrder = async (req: Request, res: Response) => {
     console.log('getOrder Called'); // Log function call
+
     try {
-        const { email } = req.params; // Extract email from request parameters
-        console.log("Email: ", email); // Log the email
+        // Extract and handle pagination parameters
+        const page: number = Number(req.query.p ?? 0);
+        const ordersPerPage: number = 2;
+        console.log('Page, ordersPerPage, skip:', page, ordersPerPage, page * ordersPerPage);
+
+        // Extract email from request parameters
+        const { email } = req.params;
+        console.log("Email:", email); // Log the email
 
         // Find orders by email and populate the 'book' field
-        const orders = await model_Order.find({ email }).populate({
-            path: 'book',
-            model: model_Book, // Populate with the book model
-        });
+        const orders = await model_Order.find({ email })
+            .populate({
+                path: 'book',
+                model: model_Book, // Populate with the book model
+            })
+            .skip(page * ordersPerPage)
+            .limit(ordersPerPage);
 
         if (orders.length === 0) {
-            return res.status(404).json({ error: 'No orders found for this email' }); // Respond with not found error
+            console.log('No orders found for this email');
+            return res.status(404).json({ error: 'No orders found for this email' });
         }
 
-        return res.status(200).json(orders); // Respond with the orders data
+        // Optionally, format the orders data if necessary
+        const formattedOrders = orders.map(order => ({
+            orderId: order.orderId,
+            customerName: order.customerName,
+            orderDate: order.orderDate,
+            book: order.book,
+            status: order.status,
+            __v: order.__v // Optional: version key for Mongoose
+        }));
+
+        return res.status(200).json(formattedOrders); // Respond with the formatted orders data
     } catch (error) {
         console.error('Error fetching orders:', error); // Log error if fetching fails
-        return res.status(500).json({ error: 'Server error' }); // Respond with server error
+        return res.status(500).json({ error: 'Server error' });
     }
 };
 
-// const getOrder = async (req: Request, res: Response) => {
-//     console.log('getOrder Called'); // Log function call
-//     try {
-//         const { orderId } = req.params; // Extract orderId from request parameters
-//         console.log("Order Id: ", orderId); // Log the orderId
-
-//         // Find the order by orderId and populate the 'book' field
-//         const order = await model_Order.findOne({ orderId }).populate({
-//             path: 'book',
-//             model: model_Book, // Populate with the book model
-//         });
-
-//         if (!order) {
-//             return res.status(404).json({ error: 'Order not found' }); // Respond with not found error
-//         }
-
-//         return res.status(200).json(order); // Respond with the order data
-//     } catch (error) {
-//         console.error('Error fetching order:', error); // Log error if fetching fails
-//         return res.status(500).json({ error: 'Server error' }); // Respond with server error
-//     }
-// };
-
-// Function to set (create) a new order
 const setOrder = async (req: Request, res: Response) => {
-    console.log("Set Order Called"); // Log function call
+    console.log("Set Order Called, req.body: ", req.body); // Log function call
     try {
         // Extract necessary data from request body
         const { personId, customerName, bookISBN } = req.body;

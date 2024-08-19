@@ -1,11 +1,8 @@
-import React, { useState,useContext } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../components/AuthContext'; // Adjust the import path
 
 export default function Authentication(): JSX.Element {
-    const { setLoggedIn, setAdmin } = useAuth();
-
     // Login state
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
@@ -25,14 +22,10 @@ export default function Authentication(): JSX.Element {
             const data = { email: loginEmail, password: loginPassword };
             const response = await axios.post("http://localhost:5000/Person/Login", data);
 
-            if (response.data && typeof response.data === 'object') {
+            if (response.data) {
                 localStorage.setItem("user", JSON.stringify(response.data.person));
-
-                // Update the context
-                setLoggedIn(true);
-                if (response.data.person.access === 'admin') {
-                    setAdmin(true);
-                }
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("isAdmin", response.data.person.access === 'admin' ? "true" : "false");
 
                 navigate('/');
             } else {
@@ -59,14 +52,19 @@ export default function Authentication(): JSX.Element {
                 email: signupEmail,
                 password: signupPassword,
             });
-            localStorage.setItem("user", JSON.stringify(response.data));
+
+            const userData = response.data;
+
+            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("isAdmin", userData.access === 'admin' ? "true" : "false");
+
             navigate('/');
         } catch (error) {
             console.error("Signup failed:", error);
             setError("Signup failed. Please try again.");
         }
     };
-
     return (
         <div className="h-[100vh] w-full flex flex-row justify-center border-2 border-black">
             <div className="transition-transform transform hover:-translate-y-2 duration-200 p-6 flex flex-col justify-center items-center border-r-2 border-[#28281e] w-[50%] h-full bg-white">

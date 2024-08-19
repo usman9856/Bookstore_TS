@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 interface IBook {
     _id: string;
@@ -42,38 +43,40 @@ export default function Cart(): JSX.Element {
 
     const setOrder = async () => {
         try {
-            // Assuming you have user data stored in localStorage
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const userDataString = localStorage.getItem('user');
+            if (!userDataString) {
+                alert('User data not found in localStorage');
+                return;
+            }
+
+            const userData = JSON.parse(userDataString);
             const { personId, firstName, lastName } = userData;
             const customerName = `${firstName} ${lastName}`;
-                        
-            // Iterate through cart books and send orders
+
+            let allOrdersSuccessful = true;
+
             for (const book of cartBooks) {
-                console.log("Set order Called", personId, customerName, book.ISBN );
-                const response = await fetch('http://localhost:5000/Order/Buy', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                try {
+                    const response = await axios.post('http://localhost:5000/Order/Buy', {
                         personId,
                         customerName,
                         bookISBN: book.ISBN,
-                    }),
-                });
+                    });
 
-                if (!response.ok) {
-                    console.error(`Failed to order book: ${book.title}`);
-                    continue;
+                    console.log(`Order successful for book: ${book.title}`, response.data);
+                } catch (error) {
+                    allOrdersSuccessful = false;
+                    console.error(`Failed to order book: ${book.title}`, error);
                 }
-
-                const result = await response.json();
-                console.log(`Order successful for book: ${book.title}`, result);
             }
 
-            alert('Order placed successfully!');
-            localStorage.removeItem('cart'); // Clear cart after successful order
-            setCartBooks([]); // Clear local state
+            if (allOrdersSuccessful) {
+                alert('Order placed successfully!');
+                localStorage.removeItem('cart'); // Clear cart after successful order
+                setCartBooks([]); // Clear local state
+            } else {
+                alert('Some orders failed. Please check the console for details.');
+            }
         } catch (error) {
             console.error('Error placing order:', error);
             alert('Failed to place order. Please try again.');

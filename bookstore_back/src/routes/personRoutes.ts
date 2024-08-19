@@ -1,9 +1,13 @@
 // Import the Router function from Express and the controller functions
 import { Router } from 'express'; // Router function for defining routes
-import { logInPerson, signUpPerson } from '../controller/personController'; // Import controller functions for login and signup
+import { logInPerson, signUpPerson,getUserById ,updateUserById} from '../controller/personController'; // Import controller functions for login and signup
 
 // Create an instance of the Router
 const router = Router();
+
+router.get('/:personId', getUserById); // Route handler for logging in a person
+router.put('/:personId', updateUserById); // Route handler for logging in a person
+
 // Define a GET route for the '/Login' endpoint
 router.post('/Login', logInPerson); // Route handler for logging in a person
 // Define a POST route for the '/Signup' endpoint

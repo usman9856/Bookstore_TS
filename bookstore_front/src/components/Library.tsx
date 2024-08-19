@@ -1,60 +1,92 @@
 import React, { useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 
-export default function Library(): JSX.Element {
-    interface IBook {
-        _id: string;
-        ISBN: string;
-        title: string;
-        author: string;
-        publishedYear: number;
-        genre: string;
-        price: number;
-        inStock?: boolean;
-        quantity: number;
-        rating?: number;
-        review: string[];
-    }
+interface IBook {
+    _id: string;
+    ISBN: string;
+    title: string;
+    author: string;
+    publishedYear: number;
+    genre: string;
+    price: number;
+    inStock?: boolean;
+    quantity: number;
+    rating?: number;
+    review: string[];
+}
 
+export default function Library(): JSX.Element {
     const [libraryBooks, setLibraryBooks] = useState<IBook[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchLibraryBooks = async () => {
+        const fetchUserDataAndLibraryBooks = async () => {
             try {
-                const userDataString = localStorage.getItem("user");
-                if (userDataString) {
-                    const userData = JSON.parse(userDataString);
-
-                    if (Array.isArray(userData.library)) {
-                        // Remove duplicates
-                        const uniqueLibrary: string[] = Array.from(new Set(userData.library));
-
-                        // Fetch all books in parallel
-                        const bookPromises: Promise<AxiosResponse<IBook>>[] = uniqueLibrary.map((_id: string) =>
-                            axios.get<IBook>(`http://localhost:5000/Book/${_id}`)
-                        );
-
-                        const bookResponses = await Promise.all(bookPromises);
-                        const books = bookResponses.map(response => response.data);
-
-                        // Remove duplicates from the fetched books
-                        const uniqueBooks = Array.from(new Set(books.map(book => book._id)))
-                            .map(id => books.find(book => book._id === id));
-
-                        // Update state with unique books
-                        setLibraryBooks(uniqueBooks as IBook[]);
-                    } else {
-                        alert("Library is empty!");
-                    }
+                const userDataString = localStorage.getItem('user');
+                if (!userDataString) {
+                    console.error("User data not found in localStorage.");
+                    setError("User data not found in localStorage.");
+                    setLoading(false);
+                    return;
                 }
-            } catch (error) {
-                console.error("Failed to fetch library books:", error);
-                alert("Failed to load books from your library.");
+                
+                let userData = JSON.parse(userDataString);
+                console.log("User data:", userData);
+        
+                if (!userData.personId) {
+                    throw new Error("User ID not found.");
+                }
+        
+                const userDataUpdated = await axios.get(`http://localhost:5000/Person/${userData.personId}`);
+                userData = userDataUpdated.data.person;
+
+                console.log("Fetched user data:", userData);
+
+                if (!Array.isArray(userData.library)) {
+                    alert("Your library is empty!");
+                    setLoading(false);
+                    return;
+                }
+
+                const uniqueLibrary: string[] = Array.from(new Set(userData.library));
+                console.log("Unique library IDs:", uniqueLibrary);
+
+                const bookPromises: Promise<AxiosResponse<IBook>>[] = uniqueLibrary.map((_id: string) =>
+                    axios.get<IBook>(`http://localhost:5000/Book/${_id}`)
+                );
+
+                const bookResponses = await Promise.all(bookPromises);
+                console.log("Fetched book responses:", bookResponses);
+
+                const books = bookResponses.map(response => response.data);
+                console.log("Fetched books:", books);
+
+                // Remove duplicates using a more reliable method
+                const uniqueBooksMap = new Map(books.map(book => [book._id, book]));
+                const uniqueBooks = Array.from(uniqueBooksMap.values());
+
+                console.log("Unique books:", uniqueBooks);
+
+                setLibraryBooks(uniqueBooks);
+            } catch (error: any) {
+                console.error("Failed to fetch user data or library books:", error);
+                setError("Failed to load books from your library.");
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchLibraryBooks();
+        fetchUserDataAndLibraryBooks();
     }, []);
+
+    if (loading) {
+        return <p className="text-center mt-10">Loading...</p>;
+    }
+
+    if (error) {
+        return <p className="text-center mt-10 text-red-500">{error}</p>;
+    }
 
     return (
         <div className="flex justify-center items-center">

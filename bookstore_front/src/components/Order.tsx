@@ -14,7 +14,7 @@ interface IOrder {
     customerName: string;
     email: string;
     orderDate: Date;
-    book: IBook;
+    book: IBook | null; // Allow book to be null
     status: string;
 }
 
@@ -22,6 +22,8 @@ export default function Order(): JSX.Element {
     const [orders, setOrders] = useState<IOrder[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(0); // State to track the current page
+    const ordersPerPage = 2; // Number of orders per page
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -29,13 +31,20 @@ export default function Order(): JSX.Element {
                 const userDataString = localStorage.getItem('user');
                 if (userDataString) {
                     const userData = JSON.parse(userDataString);
-                    const email = userData.email;
-                    if (email) {
-                        const response = await axios.get(`http://localhost:5000/Order/${email}`);
-                        setOrders(response.data);
+                    const { email } = userData;
+                    const isAdmin = localStorage.getItem('isAdmin');
+                    console.log(`isAdmin: ${isAdmin}`);
+                    let response;
+                    if (isAdmin) {
+                        response = await axios.get(`http://localhost:5000/Order?p=${currentPage}`);
+                    } else if (email && !isAdmin) {
+                        response = await axios.get(`http://localhost:5000/Order/${email}?p=${currentPage}`);
                     } else {
                         setError('Email not found in user data');
+                        return;
                     }
+
+                    setOrders(response.data);
                 } else {
                     setError('User data not found in localStorage');
                 }
@@ -46,8 +55,17 @@ export default function Order(): JSX.Element {
                 setLoading(false);
             }
         };
+
         fetchOrders();
-    }, []);
+    }, [currentPage]); // Re-run the effect when the currentPage changes
+
+    const handleNextPage = () => {
+        setCurrentPage(prevPage => prevPage + 1);
+    };
+
+    const handlePreviousPage = () => {
+        setCurrentPage(prevPage => Math.max(prevPage - 1, 0)); // Ensure page doesn't go below 0
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -81,22 +99,45 @@ export default function Order(): JSX.Element {
                                 </div>
                                 <div className="border-t pt-4 mt-4">
                                     <h3 className="text-xl font-bold mb-2">Book Details</h3>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h4 className="text-lg font-semibold">{order.book.title}</h4>
-                                            <p className="text-md">By: {order.book.author}</p>
-                                            <p className="text-md">Price: ${order.book.price.toFixed(2)}</p>
-                                            <p className="text-md">Quantity: {order.book.quantity_buy}</p>
+                                    {order.book ? ( // Check if book is not null
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <h4 className="text-lg font-semibold">{order.book.title}</h4>
+                                                <p className="text-md">By: {order.book.author}</p>
+                                                <p className="text-md">Price: ${order.book.price.toFixed(2)}</p>
+                                                <p className="text-md">Quantity: {order.book.quantity_buy}</p>
+                                            </div>
+                                            <div className="flex items-center space-x-4">
+                                                <p className="text-lg font-semibold">${(order.book.price * order.book.quantity_buy).toFixed(2)}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center space-x-4">
-                                            <p className="text-lg font-semibold">${(order.book.price * order.book.quantity_buy).toFixed(2)}</p>
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        <p className="text-center">Book details are not available.</p> // Fallback message
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
+                {/* Pagination Controls */}
+                <div className='w-full flex items-center justify-center mb-10'>
+                    <div className="flex justify-between w-96">
+                        <button
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-24"
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 0}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-24"
+                            onClick={handleNextPage}
+                            disabled={orders.length < ordersPerPage}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -8,14 +8,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBook = exports.updateBook = exports.getBook = exports.setBook = exports.getAllBooks = void 0;
 const db_schema_book_1 = require("../database/db_schema_book"); // Book model and schema
+const mongoose_1 = __importDefault(require("mongoose"));
 // Function to get all books from the database
 const getAllBooks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const page = Number((_a = req.query.p) !== null && _a !== void 0 ? _a : 0);
+    const bookPerPage = 4;
+    console.log('Page, bookPerPage, skip:', page, bookPerPage, page * bookPerPage);
     console.log("getAllBooks called"); // Log function call
     try {
-        const existingBooks = yield db_schema_book_1.model_Book.find({}); // Retrieve all books from the database
+        const existingBooks = yield db_schema_book_1.model_Book.find({}).skip(page * bookPerPage).limit(bookPerPage); // Retrieve all books from the database
         if (existingBooks.length > 0) { // Check if books exist
             res.json(existingBooks); // Respond with the list of books
         }
@@ -38,6 +46,10 @@ const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const results = []; // Array to store results
         // Loop through each book data in the request body
         for (const bookData of req.body) {
+            // Generate a new _id
+            const newId = new mongoose_1.default.Types.ObjectId();
+            // Add _id to bookData
+            bookData._id = newId;
             // Check for required fields in each book data
             if (!bookData.ISBN || !bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
                 res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` }); // Respond with error if missing fields
