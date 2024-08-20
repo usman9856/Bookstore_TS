@@ -52,7 +52,6 @@ const getAllOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getAllOrder = getAllOrder;
-// Function to get a specific order by orderId
 // Function to get a specific order by email with pagination
 const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -65,7 +64,7 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // Extract email from request parameters
         const { email } = req.params;
         console.log("Email:", email); // Log the email
-        // Find orders by email and populate the 'book' field
+        // Find orders by email and populate the 'book' field with pagination
         const orders = yield db_schema_order_1.model_Order.find({ email })
             .populate({
             path: 'book',
@@ -73,6 +72,8 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         })
             .skip(page * ordersPerPage)
             .limit(ordersPerPage);
+        // Get the total count of orders for the given email
+        const totalOrders = yield db_schema_order_1.model_Order.countDocuments({ email });
         if (orders.length === 0) {
             console.log('No orders found for this email');
             return res.status(404).json({ error: 'No orders found for this email' });
@@ -86,7 +87,13 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             status: order.status,
             __v: order.__v // Optional: version key for Mongoose
         }));
-        return res.status(200).json(formattedOrders); // Respond with the formatted orders data
+        // Respond with the paginated orders data
+        return res.status(200).json({
+            orders: formattedOrders,
+            totalOrders: totalOrders,
+            currentPage: page,
+            totalPages: Math.ceil(totalOrders / ordersPerPage)
+        });
     }
     catch (error) {
         console.error('Error fetching orders:', error); // Log error if fetching fails

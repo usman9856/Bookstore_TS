@@ -128,7 +128,11 @@ const signUpPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     console.log("Signup Person Called");
     console.log("req.body: ", req.body);
     try {
-        const { firstName, lastName, access, email, password } = req.body; // Extract fields from request body
+        const { firstName, lastName, email, password } = req.body; // Extract fields from request body
+        let access;
+        if (req.body.access == undefined) {
+            access = 'user';
+        }
         // Check if the person already exists
         const existingPerson = yield db_schema_person_1.default.findOne({ email });
         if (existingPerson) {

@@ -16,74 +16,38 @@ exports.deleteBook = exports.updateBook = exports.getBook = exports.setBook = ex
 const db_schema_book_1 = require("../database/db_schema_book"); // Book model and schema
 const mongoose_1 = __importDefault(require("mongoose"));
 // Function to get all books from the database
+// Function to get all books from the database with pagination
 const getAllBooks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const page = Number((_a = req.query.p) !== null && _a !== void 0 ? _a : 0);
-    const bookPerPage = 4;
+    const page = Number((_a = req.query.p) !== null && _a !== void 0 ? _a : 0); // Current page number
+    const bookPerPage = 4; // Number of books per page
     console.log('Page, bookPerPage, skip:', page, bookPerPage, page * bookPerPage);
-    console.log("getAllBooks called"); // Log function call
     try {
-        const existingBooks = yield db_schema_book_1.model_Book.find({}).skip(page * bookPerPage).limit(bookPerPage); // Retrieve all books from the database
-        if (existingBooks.length > 0) { // Check if books exist
-            res.json(existingBooks); // Respond with the list of books
+        // Fetch books with pagination
+        const existingBooks = yield db_schema_book_1.model_Book.find({})
+            .skip(page * bookPerPage)
+            .limit(bookPerPage);
+        // Fetch the total count of books
+        const totalBooks = yield db_schema_book_1.model_Book.countDocuments({});
+        if (existingBooks.length > 0) {
+            // Respond with paginated books and total count
+            res.status(200).json({
+                books: existingBooks,
+                totalBooks: totalBooks,
+                currentPage: page,
+                totalPages: Math.ceil(totalBooks / bookPerPage)
+            });
+        }
+        else {
+            res.status(404).json({ message: "No books found for this page." });
         }
     }
     catch (error) {
-        console.error('Error fetching menu data:', error); // Log error if fetching fails
-        return []; // Return empty array or handle error as needed
+        console.error('Error fetching books:', error);
+        res.status(500).json({ error: "Error fetching books from the database" });
     }
 });
 exports.getAllBooks = getAllBooks;
-// Function to add or update books in the database
-const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("setBook called"); // Log function call
-    try {
-        // Validate request body
-        if (!Array.isArray(req.body) || req.body.length === 0) {
-            res.status(400).json({ error: "Request body should be a non-empty array" }); // Respond with error if invalid
-            return;
-        }
-        const results = []; // Array to store results
-        // Loop through each book data in the request body
-        for (const bookData of req.body) {
-            // Generate a new _id
-            const newId = new mongoose_1.default.Types.ObjectId();
-            // Add _id to bookData
-            bookData._id = newId;
-            // Check for required fields in each book data
-            if (!bookData.ISBN || !bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
-                res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` }); // Respond with error if missing fields
-                return;
-            }
-            // Set default review if not provided
-            if (!bookData.review) {
-                bookData.review = ["Not needed"];
-            }
-            // Search for existing books with the same title and author
-            const existingBooks = yield db_schema_book_1.model_Book.find({ title: bookData.title, author: bookData.author });
-            if (existingBooks.length === 0) {
-                // Create a new book if no existing book is found
-                const newBook = new db_schema_book_1.model_Book(bookData);
-                const savedBook = yield newBook.save(); // Save the new book
-                console.log("Data Saved Successfully: ", savedBook); // Log success
-                results.push({ action: 'created', data: savedBook }); // Store result
-            }
-            else {
-                // Update the quantity of the existing book
-                const updateResult = yield db_schema_book_1.model_Book.updateOne({ title: bookData.title, author: bookData.author }, { $inc: { quantity: bookData.quantity } } // Increment the quantity
-                );
-                console.log("Data Updated Successfully: ", updateResult); // Log success
-                results.push({ action: 'updated', data: updateResult }); // Store result
-            }
-        }
-        res.status(200).json(results); // Respond with the results array
-    }
-    catch (error) {
-        console.error("Failed to add or update book:", error); // Log error if adding or updating fails
-        res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
-    }
-});
-exports.setBook = setBook;
 // Function to get a single book by ISBN
 const getBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("getBook Called"); // Log function call
@@ -156,51 +120,56 @@ const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateBook = updateBook;
-// const updateBook = async (req: Request, res: Response): Promise<void> => {
-//   console.log("Updating book function called"); // Log function call
-//   try {
-//     const { ISBN } = req.params; // Extract ISBN from request parameters
-//     const bookData = req.body; // Get book data from request body
-//     console.log("ISBN from params: ", ISBN); // Log the ISBN
-//     console.log("Book data from body: ", bookData); // Log book data
-//     if (!ISBN) {
-//       res.status(400).json({ error: "Missing required parameter: ISBN" }); // Respond with error if ISBN is missing
-//       return;
-//     }
-//     if (!bookData || Object.keys(bookData).length === 0) {
-//       res.status(400).json({ error: "Missing book data in the request body" }); // Respond with error if book data is missing
-//       return;
-//     }
-//     // Find the existing book
-//     const existingBook = await model_Book.findOne({ ISBN });
-//     if (existingBook) {
-//       // If book exists, handle reviews separately
-//       let updatedFields = { ...bookData };
-//       if (bookData.review && Array.isArray(bookData.review)) {
-//         updatedFields = {
-//           ...updatedFields,
-//           $push: { review: { $each: bookData.review } }, // Append new reviews to the existing array
-//         };
-//       }
-//       const updateResult = await model_Book.updateOne(
-//         { ISBN },
-//         { $set: updatedFields } // Update the book fields
-//       );
-//       console.log("Data Updated Successfully: ", updateResult); // Log success
-//       res.status(200).json({ action: 'updated', data: updateResult }); // Respond with update result
-//     } else {
-//       // If book doesn't exist, create a new entry
-//       const newBook = new model_Book({ ISBN, ...bookData });
-//       const savedBook = await newBook.save(); // Save the new book
-//       console.log("Data Saved Successfully: ", savedBook); // Log success
-//       res.status(201).json({ action: 'created', data: savedBook }); // Respond with creation result
-//     }
-//   } catch (error) {
-//     console.error("Failed to add or update book:", error); // Log error if adding or updating fails
-//     res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
-//   }
-// };
-// Function to delete a book by ISBN
+// Function to add or update books in the database
+const setBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("setBook called"); // Log function call
+    try {
+        // Validate request body
+        if (!Array.isArray(req.body) || req.body.length === 0) {
+            res.status(400).json({ error: "Request body should be a non-empty array" }); // Respond with error if invalid
+            return;
+        }
+        const results = []; // Array to store results
+        // Loop through each book data in the request body
+        for (const bookData of req.body) {
+            // Generate a new _id
+            const newId = new mongoose_1.default.Types.ObjectId();
+            // Add _id to bookData
+            bookData._id = newId;
+            // Check for required fields in each book data
+            if (!bookData.ISBN || !bookData.title || !bookData.author || !bookData.publishedYear || !bookData.genre || !bookData.price || !bookData.quantity) {
+                res.status(400).json({ error: `Missing required fields in entry: ${JSON.stringify(bookData)}` }); // Respond with error if missing fields
+                return;
+            }
+            // Set default review if not provided
+            if (!bookData.review) {
+                bookData.review = ["Not needed"];
+            }
+            // Search for existing books with the same title and author
+            const existingBooks = yield db_schema_book_1.model_Book.find({ title: bookData.title, author: bookData.author });
+            if (existingBooks.length === 0) {
+                // Create a new book if no existing book is found
+                const newBook = new db_schema_book_1.model_Book(bookData);
+                const savedBook = yield newBook.save(); // Save the new book
+                console.log("Data Saved Successfully: ", savedBook); // Log success
+                results.push({ action: 'created', data: savedBook }); // Store result
+            }
+            else {
+                // Update the quantity of the existing book
+                const updateResult = yield db_schema_book_1.model_Book.updateOne({ title: bookData.title, author: bookData.author }, { $inc: { quantity: bookData.quantity } } // Increment the quantity
+                );
+                console.log("Data Updated Successfully: ", updateResult); // Log success
+                results.push({ action: 'updated', data: updateResult }); // Store result
+            }
+        }
+        res.status(200).json(results); // Respond with the results array
+    }
+    catch (error) {
+        console.error("Failed to add or update book:", error); // Log error if adding or updating fails
+        res.status(500).json({ error: "Failed to add or update book in the database" }); // Respond with error
+    }
+});
+exports.setBook = setBook;
 const deleteBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("deleteBook Called"); // Log function call
     try {

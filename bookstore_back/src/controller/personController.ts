@@ -1,5 +1,5 @@
 // Import necessary modules and types from Express
-import { Request, Response } from 'express'; 
+import { Request, Response } from 'express';
 import model_person from '../database/db_schema_person'; // Import the person model
 const bcrypt = require('bcrypt'); // Import bcrypt for hashing passwords
 const SALT_ROUNDS = 10; // Number of salt rounds for bcrypt hashing
@@ -70,7 +70,7 @@ const getUserById = async (req: Request, res: Response) => {
 
         // Find the person by personId in the database
         const person = await model_person.findOne({ person_id: personId });
-        
+
         if (!person) {
             return res.status(404).json({ message: 'Person not found!' });
         }
@@ -135,7 +135,11 @@ const signUpPerson = async (req: Request, res: Response) => {
     console.log("req.body: ", req.body);
 
     try {
-        const { firstName, lastName, access, email, password } = req.body; // Extract fields from request body
+        const { firstName, lastName, email, password } = req.body; // Extract fields from request body
+        let access;
+        if (req.body.access == undefined) {
+            access = 'user';
+        }
         // Check if the person already exists
         const existingPerson = await model_person.findOne({ email });
         if (existingPerson) {
@@ -153,7 +157,7 @@ const signUpPerson = async (req: Request, res: Response) => {
                 break; // Break the loop if the ID is unique
             }
         }
-        
+
         // Create a new person with the provided details
         const newPerson = new model_person({
             person_id,
@@ -185,4 +189,4 @@ const generatePersonId = (): string => {
 
 
 
-export { logInPerson, signUpPerson,getUserById,updateUserById }; // Export the functions for use in other parts of the application
+export { logInPerson, signUpPerson, getUserById, updateUserById }; // Export the functions for use in other parts of the application
