@@ -44,7 +44,6 @@ const getAllOrder = async (req: Request, res: Response) => {
     }
 };
 
-// Function to get a specific order by orderId
 
 // Function to get a specific order by email with pagination
 const getOrder = async (req: Request, res: Response) => {
@@ -60,7 +59,7 @@ const getOrder = async (req: Request, res: Response) => {
         const { email } = req.params;
         console.log("Email:", email); // Log the email
 
-        // Find orders by email and populate the 'book' field
+        // Find orders by email and populate the 'book' field with pagination
         const orders = await model_Order.find({ email })
             .populate({
                 path: 'book',
@@ -68,6 +67,9 @@ const getOrder = async (req: Request, res: Response) => {
             })
             .skip(page * ordersPerPage)
             .limit(ordersPerPage);
+
+        // Get the total count of orders for the given email
+        const totalOrders = await model_Order.countDocuments({ email });
 
         if (orders.length === 0) {
             console.log('No orders found for this email');
@@ -84,12 +86,19 @@ const getOrder = async (req: Request, res: Response) => {
             __v: order.__v // Optional: version key for Mongoose
         }));
 
-        return res.status(200).json(formattedOrders); // Respond with the formatted orders data
+        // Respond with the paginated orders data
+        return res.status(200).json({
+            orders: formattedOrders,
+            totalOrders: totalOrders,
+            currentPage: page,
+            totalPages: Math.ceil(totalOrders / ordersPerPage)
+        });
     } catch (error) {
         console.error('Error fetching orders:', error); // Log error if fetching fails
         return res.status(500).json({ error: 'Server error' });
     }
 };
+
 
 const setOrder = async (req: Request, res: Response) => {
     console.log("Set Order Called, req.body: ", req.body); // Log function call

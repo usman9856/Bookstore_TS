@@ -60,9 +60,6 @@ const updateUserById = async (req: Request, res: Response) => {
     }
 };
 
-
-
-
 const getUserById = async (req: Request, res: Response) => {
     console.log("getUserById called");
     try {
