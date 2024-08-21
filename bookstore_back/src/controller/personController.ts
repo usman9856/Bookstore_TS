@@ -1,16 +1,17 @@
 // Import necessary modules and types from Express
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import model_person from '../database/db_schema_person'; // Import the person model
+import asyncErrorHandler from '../error_manager/asyncErrorHanlder';
+import CustomError from '../error_manager/customError';
 const bcrypt = require('bcrypt'); // Import bcrypt for hashing passwords
 const SALT_ROUNDS = 10; // Number of salt rounds for bcrypt hashing
 
 
-const updateUserById = async (req: Request, res: Response) => {
+const updateUserById = asyncErrorHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     console.log("updateUserById called");
     try {
         // Extract personId from the request parameters
         const { personId } = req.params;
-
         // Extract updated data from the request body
         const {
             firstName,
@@ -20,17 +21,13 @@ const updateUserById = async (req: Request, res: Response) => {
             library,
             orderHistory
         } = req.body;
-
         console.log("Request Parameter: ", personId);
         console.log("Request Body: ", req.body);
-
         // Find the person by personId in the database
         const person = await model_person.findOne({ person_id: personId });
-
         if (!person) {
-            return res.status(404).json({ message: 'Person not found!' });
+            return next(new CustomError("Person not found", 404));
         }
-
         // Update the person's data
         person.firstName = firstName || person.firstName;
         person.lastName = lastName || person.lastName;
@@ -38,11 +35,9 @@ const updateUserById = async (req: Request, res: Response) => {
         person.email = email || person.email;
         person.library = library || person.library;
         person.orderHistory = orderHistory || person.orderHistory;
-
         // Save the updated person
         await person.save();
-
-        return res.status(200).json({
+        res.status(200).json({
             message: 'Person updated successfully!',
             person: {
                 personId: person.person_id,
@@ -56,26 +51,23 @@ const updateUserById = async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error("Error updating person:", error);
-        return res.status(500).json({ message: 'Server error.' });
-    }
-};
+        return next(new CustomError("Internal Server Error", 500));
 
-const getUserById = async (req: Request, res: Response) => {
+    }
+});
+
+const getUserById = asyncErrorHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     console.log("getUserById called");
     try {
         // Extract personId from the request parameters
         const { personId } = req.params;
-
         console.log("Request Parameter: ", personId);
-
         // Find the person by personId in the database
         const person = await model_person.findOne({ person_id: personId });
-
         if (!person) {
-            return res.status(404).json({ message: 'Person not found!' });
+            return next(new CustomError("User not found!", 404));
         }
-
-        return res.status(200).json({
+        res.status(200).json({
             person: {
                 personId: person.person_id,
                 firstName: person.firstName,
@@ -87,14 +79,12 @@ const getUserById = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error("Error fetching person:", error);
-        return res.status(500).json({ message: 'Server error.' });
+        return next(new CustomError("Internal Server Error", 500));
     }
-};
-
+});
 
 // Function to handle user login
-const logInPerson = async (req: Request, res: Response) => {
+const logInPerson = asyncErrorHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     console.log("Login Person Called");
     console.log("req.body: ", req.body);
 
@@ -103,12 +93,12 @@ const logInPerson = async (req: Request, res: Response) => {
         // Find the person by email in the database
         const person = await model_person.findOne({ email });
         if (!person) {
-            return res.status(401).json({ message: 'Invalid email or password' }); // Return error if person not found
+            return (next(new CustomError("Invalid email or password", 401)))
         }
         // Compare the provided password with the stored hashed password
         const isMatch = await bcrypt.compare(password, person.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email or password' }); // Return error if password does not match
+            return (next(new CustomError("Invalid email or password", 401)))
         }
         // Return success response with person details
         res.status(200).json({
@@ -124,16 +114,14 @@ const logInPerson = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error(error); // Log any errors
-        res.status(500).json({ message: 'Server error' }); // Return server error response
+        return (next(new CustomError("Internal Server Error", 500)))
     }
-};
+});
 
 // Function to handle user signup
-const signUpPerson = async (req: Request, res: Response) => {
+const signUpPerson = asyncErrorHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     console.log("Signup Person Called");
     console.log("req.body: ", req.body);
-
     try {
         const { firstName, lastName, email, password } = req.body; // Extract fields from request body
         let access;
@@ -143,12 +131,11 @@ const signUpPerson = async (req: Request, res: Response) => {
         // Check if the person already exists
         const existingPerson = await model_person.findOne({ email });
         if (existingPerson) {
-            return res.status(400).json({ message: 'Person already exists' }); // Return error if person already exists
+            return (next(new CustomError("Signup Failed Id already exists", 400)))
         }
         // Hash the password using bcrypt
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
         let person_id: string;
-
         // Generate a unique person ID
         while (true) {
             person_id = generatePersonId(); // Generate a new ID
@@ -157,7 +144,6 @@ const signUpPerson = async (req: Request, res: Response) => {
                 break; // Break the loop if the ID is unique
             }
         }
-
         // Create a new person with the provided details
         const newPerson = new model_person({
             person_id,
@@ -169,16 +155,13 @@ const signUpPerson = async (req: Request, res: Response) => {
             library: [], // Initialize library with an empty array
             orderHistory: [] // Initialize orderHistory with an empty array
         });
-
         // Save the new person to the database
         await newPerson.save();
-
         res.status(201).json({ message: 'Person registered successfully' }); // Return success response
     } catch (error) {
-        console.error(error); // Log any errors
-        res.status(500).json({ message: 'Server error' }); // Return server error response
+        return (next(new CustomError("Internal Server", 500)))
     }
-};
+});
 
 // Function to generate a unique person ID
 const generatePersonId = (): string => {

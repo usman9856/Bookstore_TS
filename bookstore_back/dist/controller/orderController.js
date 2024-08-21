@@ -16,25 +16,29 @@ exports.getOrder = exports.setOrder = exports.getAllOrder = void 0;
 const db_schema_order_1 = require("../database/db_schema_order"); // Order model
 const db_schema_book_1 = require("../database/db_schema_book"); // Book model
 const db_schema_person_1 = __importDefault(require("../database/db_schema_person")); // Person model
+const customError_1 = __importDefault(require("../error_manager/customError"));
+const asyncErrorHanlder_1 = __importDefault(require("../error_manager/asyncErrorHanlder"));
 // Initialize variables for generating unique order IDs
 let orderNumber = 0; // Counter for order numbers
 let lastGeneratedDate = '20240101'; // Last generated date for order IDs
 // Function to get all orders
-const getAllOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllOrder = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    console.log('getAllOrder Called'); // Log function call
+    console.log('getAllOrder Called'); // Log function entry
+    const page = Number((_a = req.query.p) !== null && _a !== void 0 ? _a : 0);
+    const ordersPerPage = 2;
+    console.log(`Pagination details - Page: ${page}, Orders per Page: ${ordersPerPage}, Skipping: ${page * ordersPerPage} orders`);
     try {
-        const page = Number((_a = req.query.p) !== null && _a !== void 0 ? _a : 0);
-        const ordersPerPage = 2;
-        console.log('Page, ordersPerPage, skip:', page, ordersPerPage, page * ordersPerPage);
+        console.log('Fetching orders from the database...'); // Log start of fetch operation
         // Fetch all orders and populate the 'book' field with book data
         const orders = yield db_schema_order_1.model_Order.find()
             .populate({
             path: 'book',
-            model: db_schema_book_1.model_Book // Populate with the book model
+            model: db_schema_book_1.model_Book, // Populate with the book model
         })
             .skip(page * ordersPerPage)
             .limit(ordersPerPage);
+        console.log(`Fetched ${orders.length} orders from the database`); // Log the number of fetched orders
         // Format the orders if necessary
         const formattedOrders = orders.map(order => ({
             orderId: order.orderId,
@@ -42,18 +46,20 @@ const getAllOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             orderDate: order.orderDate,
             book: order.book,
             status: order.status,
-            __v: order.__v // Optional: version key for Mongoose
         }));
-        return res.status(200).json(formattedOrders); // Respond with formatted orders
+        console.log('Formatting completed, sending response to client'); // Log formatting and response
+        // Respond with formatted orders
+        res.status(200).json(formattedOrders);
+        console.log('Response sent successfully'); // Log success of the response
     }
     catch (error) {
-        console.error('Error fetching orders:', error); // Log error if fetching fails
-        return res.status(500).json({ error: 'Server error' }); // Respond with server error
+        console.error('Error fetching orders:', error); // Log the error details
+        return next(new customError_1.default("Unable to fetch the orders", 500)); // Handle the error
     }
-});
+}));
 exports.getAllOrder = getAllOrder;
 // Function to get a specific order by email with pagination
-const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getOrder = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     console.log('getOrder Called'); // Log function call
     try {
@@ -76,7 +82,7 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const totalOrders = yield db_schema_order_1.model_Order.countDocuments({ email });
         if (orders.length === 0) {
             console.log('No orders found for this email');
-            return res.status(404).json({ error: 'No orders found for this email' });
+            return next(new customError_1.default('No orders found for this email', 404));
         }
         // Optionally, format the orders data if necessary
         const formattedOrders = orders.map(order => ({
@@ -85,10 +91,9 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             orderDate: order.orderDate,
             book: order.book,
             status: order.status,
-            __v: order.__v // Optional: version key for Mongoose
         }));
         // Respond with the paginated orders data
-        return res.status(200).json({
+        res.status(200).json({
             orders: formattedOrders,
             totalOrders: totalOrders,
             currentPage: page,
@@ -96,12 +101,11 @@ const getOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
     }
     catch (error) {
-        console.error('Error fetching orders:', error); // Log error if fetching fails
-        return res.status(500).json({ error: 'Server error' });
+        return next(new customError_1.default('Order Could not be fetched', 500));
     }
-});
+}));
 exports.getOrder = getOrder;
-const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const setOrder = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Set Order Called, req.body: ", req.body); // Log function call
     try {
         // Extract necessary data from request body
@@ -112,24 +116,25 @@ const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const orderDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`; // Format order date
         // Validate required fields
         if (!customerName || !orderDate || !bookISBN) {
-            return res.status(400).json({ message: 'Missing required fields' }); // Respond with validation error
+            return next(new customError_1.default('Missing required fields', 400));
+            // return res.status(400).json({ message: 'Missing required fields' }); // Respond with validation error
         }
         // Check if the book exists and is in stock
         if (!book) {
-            return res.status(404).json({ message: 'Book not found' }); // Respond with not found error
+            return next(new customError_1.default('Book Not Found', 404));
         }
         else if (book.quantity <= 0) {
-            return res.status(400).json({ message: 'Book is out of stock' }); // Respond with out of stock error
-        } ////////////////////////////////////////// Test this code snippet for future additions of books
+            return next(new customError_1.default('Book is out of stock', 400));
+        }
         else if (!person.library.includes(book._id)) {
             person.library.push(book._id);
         }
         else {
-            console.log("Book already exists in the library.");
+            return next(new customError_1.default('Book already in library', 400));
         }
         // Check if the person exists
         if (!person) {
-            return res.status(404).json({ message: 'Person not found' }); // Respond with not found error
+            return next(new customError_1.default('User Id not Found', 404));
         }
         // Generate a new order ID
         const orderId = generateOrderId(); // Call function to generate order ID
@@ -156,10 +161,9 @@ const setOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(201).json({ message: 'Order set successfully', order: newOrder });
     }
     catch (error) {
-        console.error('Error setting order:', error); // Log error if setting fails
-        res.status(500).json({ message: 'Internal server error' }); // Respond with server error
+        return next(new customError_1.default('Internal server error', 500));
     }
-});
+}));
 exports.setOrder = setOrder;
 // Function to generate a unique order ID
 const generateOrderId = () => {

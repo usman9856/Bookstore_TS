@@ -14,9 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserById = exports.getUserById = exports.signUpPerson = exports.logInPerson = void 0;
 const db_schema_person_1 = __importDefault(require("../database/db_schema_person")); // Import the person model
+const asyncErrorHanlder_1 = __importDefault(require("../error_manager/asyncErrorHanlder"));
+const customError_1 = __importDefault(require("../error_manager/customError"));
 const bcrypt = require('bcrypt'); // Import bcrypt for hashing passwords
 const SALT_ROUNDS = 10; // Number of salt rounds for bcrypt hashing
-const updateUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updateUserById = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("updateUserById called");
     try {
         // Extract personId from the request parameters
@@ -28,7 +30,7 @@ const updateUserById = (req, res) => __awaiter(void 0, void 0, void 0, function*
         // Find the person by personId in the database
         const person = yield db_schema_person_1.default.findOne({ person_id: personId });
         if (!person) {
-            return res.status(404).json({ message: 'Person not found!' });
+            return next(new customError_1.default("Person not found", 404));
         }
         // Update the person's data
         person.firstName = firstName || person.firstName;
@@ -39,7 +41,7 @@ const updateUserById = (req, res) => __awaiter(void 0, void 0, void 0, function*
         person.orderHistory = orderHistory || person.orderHistory;
         // Save the updated person
         yield person.save();
-        return res.status(200).json({
+        res.status(200).json({
             message: 'Person updated successfully!',
             person: {
                 personId: person.person_id,
@@ -54,11 +56,11 @@ const updateUserById = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     catch (error) {
         console.error("Error updating person:", error);
-        return res.status(500).json({ message: 'Server error.' });
+        return next(new customError_1.default("Internal Server Error", 500));
     }
-});
+}));
 exports.updateUserById = updateUserById;
-const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getUserById = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("getUserById called");
     try {
         // Extract personId from the request parameters
@@ -67,9 +69,9 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         // Find the person by personId in the database
         const person = yield db_schema_person_1.default.findOne({ person_id: personId });
         if (!person) {
-            return res.status(404).json({ message: 'Person not found!' });
+            return next(new customError_1.default("User not found!", 404));
         }
-        return res.status(200).json({
+        res.status(200).json({
             person: {
                 personId: person.person_id,
                 firstName: person.firstName,
@@ -82,13 +84,12 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
-        console.error("Error fetching person:", error);
-        return res.status(500).json({ message: 'Server error.' });
+        return next(new customError_1.default("Internal Server Error", 500));
     }
-});
+}));
 exports.getUserById = getUserById;
 // Function to handle user login
-const logInPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const logInPerson = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Login Person Called");
     console.log("req.body: ", req.body);
     try {
@@ -96,12 +97,12 @@ const logInPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         // Find the person by email in the database
         const person = yield db_schema_person_1.default.findOne({ email });
         if (!person) {
-            return res.status(401).json({ message: 'Invalid email or password' }); // Return error if person not found
+            return (next(new customError_1.default("Invalid email or password", 401)));
         }
         // Compare the provided password with the stored hashed password
         const isMatch = yield bcrypt.compare(password, person.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email or password' }); // Return error if password does not match
+            return (next(new customError_1.default("Invalid email or password", 401)));
         }
         // Return success response with person details
         res.status(200).json({
@@ -118,13 +119,12 @@ const logInPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
-        console.error(error); // Log any errors
-        res.status(500).json({ message: 'Server error' }); // Return server error response
+        return (next(new customError_1.default("Internal Server Error", 500)));
     }
-});
+}));
 exports.logInPerson = logInPerson;
 // Function to handle user signup
-const signUpPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const signUpPerson = (0, asyncErrorHanlder_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Signup Person Called");
     console.log("req.body: ", req.body);
     try {
@@ -136,7 +136,7 @@ const signUpPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         // Check if the person already exists
         const existingPerson = yield db_schema_person_1.default.findOne({ email });
         if (existingPerson) {
-            return res.status(400).json({ message: 'Person already exists' }); // Return error if person already exists
+            return (next(new customError_1.default("Signup Failed Id already exists", 400)));
         }
         // Hash the password using bcrypt
         const hashedPassword = yield bcrypt.hash(password, SALT_ROUNDS);
@@ -165,10 +165,9 @@ const signUpPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.status(201).json({ message: 'Person registered successfully' }); // Return success response
     }
     catch (error) {
-        console.error(error); // Log any errors
-        res.status(500).json({ message: 'Server error' }); // Return server error response
+        return (next(new customError_1.default("Internal Server", 500)));
     }
-});
+}));
 exports.signUpPerson = signUpPerson;
 // Function to generate a unique person ID
 const generatePersonId = () => {
